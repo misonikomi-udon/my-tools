@@ -145,6 +145,8 @@
   }
   .btn-primary:active{ box-shadow:none; transform:translate(2px,2px); }
   .btn-full{ width:100%; margin-top:4px; }
+  button:disabled{ opacity:.55; cursor:not-allowed; }
+  button:disabled:active{ box-shadow:2px 2px 0 var(--ink); transform:none; }
 
   /* ---- chips ---- */
   .chips{
@@ -251,6 +253,11 @@
     color:var(--ink-soft);
     margin-left:auto;
   }
+  .trans-original{
+    font-size:.72rem;
+    color:var(--stone);
+    margin:0 0 2px;
+  }
   .result-cat{
     font-size:.76rem;
     color:var(--ink-soft);
@@ -304,8 +311,10 @@
 
   <div class="panel">
     <p class="step"><span class="num">2.</span> 成分表を貼り付け</p>
-    <p class="hint">パッケージの全成分表示をそのままコピー＆ペーストしてください。</p>
-    <textarea id="ingredientText" aria-label="成分表を貼り付け" placeholder="例：水、BG、グリセリン、ヒアルロン酸Na、セラミドNP、フェノキシエタノール..."></textarea>
+    <p class="hint">日本語だけでなく、英語・韓国語などの成分表もそのまま貼り付けられます。データベースにない成分はAIが自動で日本語表記に翻訳します。</p>
+    <textarea id="ingredientText" aria-label="成分表を貼り付け" placeholder="例：水、BG、グリセリン、ヒアルロン酸Na、セラミドNP、フェノキシエタノール...
+Water, Glycerin, Butylene Glycol...
+정제수, 글리세린, 부틸렌글라이콜..."></textarea>
     <button id="checkBtn" class="btn-primary btn-full">チェックする</button>
   </div>
 
@@ -318,7 +327,8 @@
 
   <footer>
     ※ 一般的に知られている化粧品成分の役割を簡単にまとめたものです。製品ごとの効果や安全性を保証するものではありません。判断に迷う場合は製造元や専門家にご確認ください。<br>
-    ※ 登録した成分リストはこの端末にのみ保存され、次回この画面を開いたときも引き継がれます。
+    ※ 登録した成分リストはこの端末にのみ保存され、次回この画面を開いたときも引き継がれます。<br>
+    ※ データベースにない成分の翻訳にはAIを利用するため、通信環境が必要です。翻訳結果は参考情報としてご利用ください。
   </footer>
 
 </div>
@@ -327,51 +337,51 @@
 (function(){
 
   var ingredientDB = [
-    {name:"水", aliases:["精製水","イオン交換水"], category:"基剤", effect:"他の成分を溶かし込むための基剤（ベース）として配合されます。"},
-    {name:"BG", aliases:["ブチレングリコール","1,3-ブチレングリコール"], category:"保湿", effect:"保湿成分を溶かしやすくするほか、肌のうるおいを保つ働きもあります。"},
-    {name:"グリセリン", aliases:[], category:"保湿", effect:"空気中の水分を引き寄せ、肌の水分保持を助けます。"},
-    {name:"ヒアルロン酸Na", aliases:["ヒアルロン酸ナトリウム"], category:"保湿", effect:"自重の数百倍ともいわれる水分を抱え込む、代表的な保湿成分です。"},
-    {name:"加水分解ヒアルロン酸", aliases:[], category:"保湿", effect:"通常のヒアルロン酸より分子が小さく、肌になじみやすいとされます。"},
-    {name:"セラミド", aliases:["セラミドNP","セラミドAP","セラミド3","セラミド6-II","セラミドEOP"], category:"保湿", effect:"肌表面のバリア機能を支える細胞間脂質の一種で、うるおいの蒸発を防ぎます。"},
-    {name:"コラーゲン", aliases:["加水分解コラーゲン"], category:"保湿", effect:"肌表面に薄い膜を作り、うるおいを保持しやすくします。"},
-    {name:"スクワラン", aliases:[], category:"保湿", effect:"肌になじみやすい油分で、うるおいを閉じ込めるフタの役割をします。"},
-    {name:"ワセリン", aliases:["ペトロラタム"], category:"保湿", effect:"肌の表面を覆って水分の蒸発を防ぐ、保護力の高い保湿成分です。"},
-    {name:"ナイアシンアミド", aliases:["ニコチン酸アミド"], category:"美白・肌荒れケア", effect:"美白ケアやハリ、バリア機能のサポートなど幅広い働きが期待される成分です。"},
-    {name:"アスコルビン酸", aliases:["ビタミンC","3-O-エチルアスコルビン酸","アスコルビン酸グルコシド","リン酸アスコルビルMg"], category:"美白・抗酸化", effect:"抗酸化作用や美白ケアの目的で使われる成分です。"},
-    {name:"トコフェロール", aliases:["ビタミンE","酢酸トコフェロール"], category:"抗酸化", effect:"油分の酸化を防ぐ、抗酸化成分として配合されます。"},
-    {name:"レチノール", aliases:["パルミチン酸レチノール"], category:"エイジングケア", effect:"ターンオーバーを促す働きが知られ、エイジングケア化粧品によく使われます。"},
-    {name:"パンテノール", aliases:["プロビタミンB5"], category:"保湿", effect:"肌をやわらかく整え、うるおいを与える成分です。"},
-    {name:"アラントイン", aliases:[], category:"肌荒れケア", effect:"肌を落ち着かせる目的で配合される、肌荒れケア成分です。"},
-    {name:"グリチルリチン酸2K", aliases:["グリチルリチン酸ジカリウム"], category:"肌荒れケア", effect:"甘草由来の成分で、肌荒れを防ぐ目的で配合されます。"},
-    {name:"サリチル酸", aliases:[], category:"角質ケア", effect:"古い角質をやわらかくする働きがあり、ニキビ・毛穴ケア製品に使われます。"},
-    {name:"グリコール酸", aliases:["AHA"], category:"角質ケア", effect:"角質をやわらかくするピーリング系の成分です。"},
-    {name:"乳酸", aliases:[], category:"角質ケア・保湿", effect:"角質ケアと保湿、両方の働きが期待される成分です。"},
-    {name:"トラネキサム酸", aliases:[], category:"美白", effect:"メラニンの生成に関わる働きに着目した美白成分です。"},
-    {name:"アルブチン", aliases:["α-アルブチン"], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
-    {name:"コウジ酸", aliases:[], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
-    {name:"ジメチコン", aliases:["シリコーン"], category:"感触改善", effect:"肌表面をなめらかにし、のびや使用感を良くするシリコーン系成分です。"},
-    {name:"シクロペンタシロキサン", aliases:[], category:"感触改善", effect:"さらっとした使用感を出すために使われるシリコーン系成分です。"},
-    {name:"エタノール", aliases:["変性アルコール","アルコール"], category:"溶剤・清涼感", effect:"清涼感を与えたり成分を溶かしたりしますが、乾燥しやすい肌には刺激になる場合があります。"},
-    {name:"フェノキシエタノール", aliases:[], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
-    {name:"メチルパラベン", aliases:["パラベン","エチルパラベン","プロピルパラベン"], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
-    {name:"香料", aliases:["フレグランス","パルファム"], category:"香り", effect:"製品に香りをつけるための成分です。"},
-    {name:"着色料", aliases:["青色1号","黄色4号","赤色202号"], category:"着色", effect:"製品に色をつけるための成分です。"},
-    {name:"クエン酸", aliases:[], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
-    {name:"水酸化Na", aliases:["水酸化ナトリウム"], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
-    {name:"EDTA-2Na", aliases:["エデト酸2Na"], category:"安定化", effect:"金属イオンを封じ込め、製品の品質を安定させるために配合されます。"},
-    {name:"カルボマー", aliases:[], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
-    {name:"キサンタンガム", aliases:[], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
-    {name:"ラウリル硫酸Na", aliases:["ラウリル硫酸ナトリウム","SLS"], category:"洗浄剤", effect:"高い洗浄力を持つ界面活性剤で、洗浄料などに使われます。"},
-    {name:"コカミドDEA", aliases:[], category:"洗浄補助", effect:"泡立ちや泡質を良くするために配合されます。"},
-    {name:"ステアリン酸", aliases:[], category:"乳化剤", effect:"油分と水分を混ぜ合わせる乳化剤として使われます。"},
-    {name:"ミリスチン酸イソプロピル", aliases:[], category:"感触改善", effect:"油分をなじみやすくし、のびを良くする成分です。"},
-    {name:"ホホバ種子油", aliases:["ホホバオイル"], category:"保湿", effect:"肌になじみやすい植物油で、うるおいを与えます。"},
-    {name:"シア脂", aliases:["シアバター"], category:"保湿", effect:"肌をやわらかく保湿する植物性の油分です。"},
-    {name:"ユビキノン", aliases:["コエンザイムQ10"], category:"抗酸化", effect:"抗酸化作用が期待される、エイジングケア系の成分です。"},
-    {name:"プラセンタエキス", aliases:[], category:"保湿", effect:"うるおいや肌のコンディションを整える目的で配合されます。"},
-    {name:"ペンチレングリコール", aliases:[], category:"保湿・防腐サポート", effect:"保湿効果に加え、防腐効果を高めるサポート役としても使われます。"},
-    {name:"1,2-ヘキサンジオール", aliases:[], category:"防腐サポート", effect:"防腐効果を高めるサポート役として配合されることが多い成分です。"},
-    {name:"ヒアルロン酸クロスポリマー", aliases:[], category:"保湿・皮膜形成", effect:"肌表面に均一な膜を作り、うるおいを保つ働きがあります。"}
+    {name:"水", aliases:["精製水","イオン交換水","Water","Aqua","정제수","물"], category:"基剤", effect:"他の成分を溶かし込むための基剤（ベース）として配合されます。"},
+    {name:"BG", aliases:["ブチレングリコール","1,3-ブチレングリコール","Butylene Glycol","부틸렌글라이콜"], category:"保湿", effect:"保湿成分を溶かしやすくするほか、肌のうるおいを保つ働きもあります。"},
+    {name:"グリセリン", aliases:["Glycerin","Glycerine","글리세린"], category:"保湿", effect:"空気中の水分を引き寄せ、肌の水分保持を助けます。"},
+    {name:"ヒアルロン酸Na", aliases:["ヒアルロン酸ナトリウム","Sodium Hyaluronate","히알루론산나트륨"], category:"保湿", effect:"自重の数百倍ともいわれる水分を抱え込む、代表的な保湿成分です。"},
+    {name:"加水分解ヒアルロン酸", aliases:["Hydrolyzed Hyaluronic Acid","가수분해히알루론산"], category:"保湿", effect:"通常のヒアルロン酸より分子が小さく、肌になじみやすいとされます。"},
+    {name:"セラミド", aliases:["セラミドNP","セラミドAP","セラミド3","セラミド6-II","セラミドEOP","Ceramide","Ceramide NP","세라마이드"], category:"保湿", effect:"肌表面のバリア機能を支える細胞間脂質の一種で、うるおいの蒸発を防ぎます。"},
+    {name:"コラーゲン", aliases:["加水分解コラーゲン","Collagen","Hydrolyzed Collagen","콜라겐","가수분해콜라겐"], category:"保湿", effect:"肌表面に薄い膜を作り、うるおいを保持しやすくします。"},
+    {name:"スクワラン", aliases:["Squalane","스쿠알란"], category:"保湿", effect:"肌になじみやすい油分で、うるおいを閉じ込めるフタの役割をします。"},
+    {name:"ワセリン", aliases:["ペトロラタム","Petrolatum","Petroleum Jelly","바세린"], category:"保湿", effect:"肌の表面を覆って水分の蒸発を防ぐ、保護力の高い保湿成分です。"},
+    {name:"ナイアシンアミド", aliases:["ニコチン酸アミド","Niacinamide","나이아신아마이드"], category:"美白・肌荒れケア", effect:"美白ケアやハリ、バリア機能のサポートなど幅広い働きが期待される成分です。"},
+    {name:"アスコルビン酸", aliases:["ビタミンC","3-O-エチルアスコルビン酸","アスコルビン酸グルコシド","リン酸アスコルビルMg","Ascorbic Acid","Vitamin C","아스코르빈산","비타민씨"], category:"美白・抗酸化", effect:"抗酸化作用や美白ケアの目的で使われる成分です。"},
+    {name:"トコフェロール", aliases:["ビタミンE","酢酸トコフェロール","Tocopherol","Vitamin E","토코페롤"], category:"抗酸化", effect:"油分の酸化を防ぐ、抗酸化成分として配合されます。"},
+    {name:"レチノール", aliases:["パルミチン酸レチノール","Retinol","레티놀"], category:"エイジングケア", effect:"ターンオーバーを促す働きが知られ、エイジングケア化粧品によく使われます。"},
+    {name:"パンテノール", aliases:["プロビタミンB5","Panthenol","판테놀"], category:"保湿", effect:"肌をやわらかく整え、うるおいを与える成分です。"},
+    {name:"アラントイン", aliases:["Allantoin","알란토인"], category:"肌荒れケア", effect:"肌を落ち着かせる目的で配合される、肌荒れケア成分です。"},
+    {name:"グリチルリチン酸2K", aliases:["グリチルリチン酸ジカリウム","Dipotassium Glycyrrhizate","글리시리진산2칼륨"], category:"肌荒れケア", effect:"甘草由来の成分で、肌荒れを防ぐ目的で配合されます。"},
+    {name:"サリチル酸", aliases:["Salicylic Acid","살리실산"], category:"角質ケア", effect:"古い角質をやわらかくする働きがあり、ニキビ・毛穴ケア製品に使われます。"},
+    {name:"グリコール酸", aliases:["AHA","Glycolic Acid","글라이콜릭애씨드"], category:"角質ケア", effect:"角質をやわらかくするピーリング系の成分です。"},
+    {name:"乳酸", aliases:["Lactic Acid","락틱애씨드"], category:"角質ケア・保湿", effect:"角質ケアと保湿、両方の働きが期待される成分です。"},
+    {name:"トラネキサム酸", aliases:["Tranexamic Acid","트라넥사믹애씨드"], category:"美白", effect:"メラニンの生成に関わる働きに着目した美白成分です。"},
+    {name:"アルブチン", aliases:["α-アルブチン","Arbutin","알부틴"], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
+    {name:"コウジ酸", aliases:["Kojic Acid","코지산"], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
+    {name:"ジメチコン", aliases:["シリコーン","Dimethicone","디메치콘"], category:"感触改善", effect:"肌表面をなめらかにし、のびや使用感を良くするシリコーン系成分です。"},
+    {name:"シクロペンタシロキサン", aliases:["Cyclopentasiloxane","사이클로펜타실록세인"], category:"感触改善", effect:"さらっとした使用感を出すために使われるシリコーン系成分です。"},
+    {name:"エタノール", aliases:["変性アルコール","アルコール","Alcohol","Ethanol","Alcohol Denat.","에탄올"], category:"溶剤・清涼感", effect:"清涼感を与えたり成分を溶かしたりしますが、乾燥しやすい肌には刺激になる場合があります。"},
+    {name:"フェノキシエタノール", aliases:["Phenoxyethanol","페녹시에탄올"], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
+    {name:"メチルパラベン", aliases:["パラベン","エチルパラベン","プロピルパラベン","Methylparaben","Parabens","메틸파라벤"], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
+    {name:"香料", aliases:["フレグランス","パルファム","Fragrance","Parfum","향료"], category:"香り", effect:"製品に香りをつけるための成分です。"},
+    {name:"着色料", aliases:["青色1号","黄色4号","赤色202号","Colorant","착색제"], category:"着色", effect:"製品に色をつけるための成分です。"},
+    {name:"クエン酸", aliases:["Citric Acid","구연산"], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
+    {name:"水酸化Na", aliases:["水酸化ナトリウム","Sodium Hydroxide","수산화나트륨"], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
+    {name:"EDTA-2Na", aliases:["エデト酸2Na","Disodium EDTA","이디티에이2나트륨"], category:"安定化", effect:"金属イオンを封じ込め、製品の品質を安定させるために配合されます。"},
+    {name:"カルボマー", aliases:["Carbomer","카보머"], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
+    {name:"キサンタンガム", aliases:["Xanthan Gum","잔탄검"], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
+    {name:"ラウリル硫酸Na", aliases:["ラウリル硫酸ナトリウム","SLS","Sodium Lauryl Sulfate","소듐라우릴설페이트"], category:"洗浄剤", effect:"高い洗浄力を持つ界面活性剤で、洗浄料などに使われます。"},
+    {name:"コカミドDEA", aliases:["Cocamide DEA","코카미드디이에이"], category:"洗浄補助", effect:"泡立ちや泡質を良くするために配合されます。"},
+    {name:"ステアリン酸", aliases:["Stearic Acid","스테아르산"], category:"乳化剤", effect:"油分と水分を混ぜ合わせる乳化剤として使われます。"},
+    {name:"ミリスチン酸イソプロピル", aliases:["Isopropyl Myristate","미리스틴산이소프로필"], category:"感触改善", effect:"油分をなじみやすくし、のびを良くする成分です。"},
+    {name:"ホホバ種子油", aliases:["ホホバオイル","Jojoba Oil","Simmondsia Chinensis Seed Oil","호호바씨오일"], category:"保湿", effect:"肌になじみやすい植物油で、うるおいを与えます。"},
+    {name:"シア脂", aliases:["シアバター","Shea Butter","Butyrospermum Parkii Butter","시어버터"], category:"保湿", effect:"肌をやわらかく保湿する植物性の油分です。"},
+    {name:"ユビキノン", aliases:["コエンザイムQ10","Ubiquinone","Coenzyme Q10","유비퀴논"], category:"抗酸化", effect:"抗酸化作用が期待される、エイジングケア系の成分です。"},
+    {name:"プラセンタエキス", aliases:["Placenta Extract","플라센타추출물"], category:"保湿", effect:"うるおいや肌のコンディションを整える目的で配合されます。"},
+    {name:"ペンチレングリコール", aliases:["Pentylene Glycol","펜틸렌글라이콜"], category:"保湿・防腐サポート", effect:"保湿効果に加え、防腐効果を高めるサポート役としても使われます。"},
+    {name:"1,2-ヘキサンジオール", aliases:["1,2-Hexanediol","Hexanediol","헥산다이올"], category:"防腐サポート", effect:"防腐効果を高めるサポート役として配合されることが多い成分です。"},
+    {name:"ヒアルロン酸クロスポリマー", aliases:["Sodium Hyaluronate Crosspolymer","Hyaluronic Acid Crosspolymer","히알루론산크로스폴리머"], category:"保湿・皮膜形成", effect:"肌表面に均一な膜を作り、うるおいを保つ働きがあります。"}
   ];
 
   var suggestions = ["ヒアルロン酸Na","セラミド","ナイアシンアミド","レチノール","アスコルビン酸","グリチルリチン酸2K","サリチル酸","パラベン","香料","エタノール","ラウリル硫酸Na","トラネキサム酸"];
@@ -501,66 +511,147 @@
     });
   }
 
-  function checkIngredients(){
+  function buildTranslationPrompt(texts){
+    return "あなたは化粧品成分の専門家です。次のリストは化粧品の全成分表示から抽出した成分名です。日本語・英語・韓国語などが混在している場合があります。\n" +
+      "各項目について、日本の化粧品の全成分表示で一般的に使われる日本語表記に翻訳し、その成分の役割を日本語で25文字程度の一文で簡潔に説明してください。\n" +
+      "成分として認識できない項目の場合は、japaneseに原文をそのまま入れ、effectは空文字にしてください。\n" +
+      "前置きや説明、コードブロックの記法（```）を一切含めず、次のJSON配列のみを出力してください。配列の要素数と順序は入力と完全に一致させてください。\n\n" +
+      "入力: " + JSON.stringify(texts) + "\n\n" +
+      "出力形式: [{\"original\":\"元の文字列\",\"japanese\":\"日本語表記\",\"effect\":\"簡潔な説明\"}]";
+  }
+
+  async function translateUnknown(texts){
+    try{
+      var response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: buildTranslationPrompt(texts) }]
+        })
+      });
+      var data = await response.json();
+      var combined = (data.content || []).map(function(c){ return c.text || ''; }).join('');
+      var clean = combined.replace(/```json|```/g, '').trim();
+      var parsed = JSON.parse(clean);
+      var map = {};
+      parsed.forEach(function(p){
+        if(p && p.original) map[normalize(p.original)] = p;
+      });
+      return map;
+    }catch(e){
+      console.error('翻訳に失敗しました', e);
+      return null;
+    }
+  }
+
+  async function resolveItems(items){
+    var results = new Array(items.length);
+    var unknownTexts = [];
+    items.forEach(function(it, idx){
+      var entry = findDbEntry(it);
+      if(entry){
+        results[idx] = { original: it, japanese: entry.name, category: entry.category, effect: entry.effect };
+      } else {
+        results[idx] = null;
+        unknownTexts.push(it);
+      }
+    });
+
+    if(unknownTexts.length > 0){
+      var translated = await translateUnknown(unknownTexts);
+      items.forEach(function(it, idx){
+        if(results[idx]) return;
+        var t = translated ? translated[normalize(it)] : null;
+        if(t){
+          results[idx] = { original: it, japanese: t.japanese || it, category: '', effect: t.effect || '' };
+        } else {
+          results[idx] = { original: it, japanese: it, category: '', effect: '' };
+        }
+      });
+    }
+    return results;
+  }
+
+  function renderTranslatedItem(item){
+    var showOriginal = normalize(item.original) !== normalize(item.japanese);
+    var known = !!item.effect;
+    var html = '<div class="result-item">';
+    if(showOriginal){
+      html += '<p class="trans-original mono">' + escapeHtml(item.original) + '</p>';
+    }
+    html += '<div class="result-head"><span class="dot ' + (known ? 'found' : 'notfound') + '"></span><span>' + escapeHtml(item.japanese) + '</span></div>';
+    if(item.category){
+      html += '<p class="result-cat">【' + escapeHtml(item.category) + '】</p>';
+    }
+    if(item.effect){
+      html += '<p class="result-effect">' + escapeHtml(item.effect) + '</p>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderAllResults(resolved){
+    var html = '';
+
+    if(watchlist.length === 0){
+      html += '<p class="placeholder">登録された成分がありません。下に、成分表全体の日本語訳を表示します。</p>';
+    } else {
+      watchlist.forEach(function(w){
+        var wNorm = normalize(w);
+        var match = null;
+        for(var i=0;i<resolved.length;i++){
+          if(isMatch(normalize(resolved[i].japanese), wNorm) || isMatch(normalize(resolved[i].original), wNorm)){
+            match = resolved[i];
+            break;
+          }
+        }
+        var entry = findDbEntry(w);
+        var category = entry ? entry.category : (match ? match.category : '');
+        var effect = entry ? entry.effect : (match ? match.effect : '');
+        html += '<div class="result-item">';
+        html += '<div class="result-head"><span class="dot ' + (match ? 'found' : 'notfound') + '"></span>';
+        html += '<span>' + escapeHtml(w) + '</span>';
+        html += '<span class="result-status">' + (match ? '含まれています' : '見つかりません') + '</span></div>';
+        if(category){ html += '<p class="result-cat">【' + escapeHtml(category) + '】</p>'; }
+        if(effect){ html += '<p class="result-effect">' + escapeHtml(effect) + '</p>'; }
+        html += '</div>';
+      });
+    }
+
+    html += '<p class="section-sub">成分表の日本語訳（全' + resolved.length + '成分）</p>';
+    resolved.forEach(function(item){
+      html += renderTranslatedItem(item);
+    });
+
+    resultsEl.innerHTML = html;
+  }
+
+  async function checkIngredients(){
     var text = textareaEl.value;
     if(!text.trim()){
       resultsEl.innerHTML = '<p class="placeholder">成分表を貼り付けてください。</p>';
       return;
     }
 
-    var items = text.split(/[、,，\/\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
-    var itemsNorm = items.map(normalize);
-
-    var html = '';
-
-    if(watchlist.length === 0){
-      html += '<p class="placeholder">登録された成分がありません。下に、この表に含まれる注目成分を表示します。</p>';
-    } else {
-      watchlist.forEach(function(w){
-        var wNorm = normalize(w);
-        var found = itemsNorm.some(function(iN){ return isMatch(iN, wNorm); });
-        var entry = findDbEntry(w);
-        html += '<div class="result-item">';
-        html += '<div class="result-head"><span class="dot ' + (found ? 'found' : 'notfound') + '"></span>';
-        html += '<span>' + escapeHtml(w) + '</span>';
-        html += '<span class="result-status">' + (found ? '含まれています' : '見つかりません') + '</span></div>';
-        if(entry){
-          html += '<p class="result-cat">【' + escapeHtml(entry.category) + '】</p>';
-          html += '<p class="result-effect">' + escapeHtml(entry.effect) + '</p>';
-        }
-        html += '</div>';
-      });
+    var items = text.split(/[、\n\/，]+|,(?!\d)/).map(function(s){ return s.trim(); }).filter(Boolean);
+    if(items.length === 0){
+      resultsEl.innerHTML = '<p class="placeholder">成分を読み取れませんでした。区切り方をご確認ください。</p>';
+      return;
     }
 
-    // auto-detect other known ingredients not already covered by the watchlist
-    var watchNorms = watchlist.map(normalize);
-    var others = [];
-    ingredientDB.forEach(function(entry){
-      var names = [entry.name].concat(entry.aliases || []).map(normalize);
-      var inList = names.some(function(nm){
-        return itemsNorm.some(function(iN){ return isMatch(iN, nm); });
-      });
-      if(!inList) return;
-      var alreadyWatched = names.some(function(nm){
-        return watchNorms.some(function(wN){ return isMatch(wN, nm); });
-      });
-      if(!alreadyWatched) others.push(entry);
-    });
+    checkBtnEl.disabled = true;
+    checkBtnEl.textContent = '確認中…';
+    resultsEl.innerHTML = '<p class="placeholder">成分を確認しています…（データベースにない成分はAIで翻訳するため、少し時間がかかる場合があります）</p>';
 
-    html += '<p class="section-sub">この表に含まれるその他の注目成分</p>';
-    if(others.length === 0){
-      html += '<p class="placeholder">データベースに一致する成分は他に見つかりませんでした。</p>';
-    } else {
-      others.forEach(function(entry){
-        html += '<div class="result-item">';
-        html += '<div class="result-head"><span class="dot found"></span><span>' + escapeHtml(entry.name) + '</span></div>';
-        html += '<p class="result-cat">【' + escapeHtml(entry.category) + '】</p>';
-        html += '<p class="result-effect">' + escapeHtml(entry.effect) + '</p>';
-        html += '</div>';
-      });
+    try{
+      var resolved = await resolveItems(items);
+      renderAllResults(resolved);
+    } finally {
+      checkBtnEl.disabled = false;
+      checkBtnEl.textContent = 'チェックする';
     }
-
-    resultsEl.innerHTML = html;
   }
 
   checkBtnEl.addEventListener('click', checkIngredients);
