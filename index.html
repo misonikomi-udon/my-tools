@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全成分チェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC;
+    --surface:#FBFAF6;
+    --surface-2:#F2F0E4;
+    --ink:#23291F;
+    --ink-soft:#5B6358;
+    --line:#D6D9CB;
+    --accent:#4C6B54;
+    --accent-soft:#DCE5DA;
+    --stone:#A9A28F;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{
+    max-width:480px;
+    margin:0 auto;
+    padding:22px 16px 48px;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  /* ---- header tag ---- */
+  .tag{
+    position:relative;
+    background:var(--surface);
+    border:1.5px solid var(--ink);
+    border-radius:3px 16px 3px 3px;
+    padding:16px 18px 16px 34px;
+    box-shadow:4px 4px 0 var(--accent-soft);
+    transform:rotate(-1.4deg);
+    animation:settle 0.5s ease-out;
+  }
+  .tag::before{
+    content:'';
+    position:absolute;
+    left:11px; top:50%;
+    width:9px; height:9px;
+    margin-top:-4.5px;
+    border-radius:50%;
+    background:var(--bg);
+    border:1.5px solid var(--ink);
+  }
+  .tag h1{
+    margin:0 0 4px;
+    font-size:1.15rem;
+    font-weight:700;
+    letter-spacing:.02em;
+  }
+  .tag p{
+    margin:0;
+    font-size:.82rem;
+    color:var(--ink-soft);
+  }
+  @keyframes settle{
+    from{ opacity:0; transform:rotate(-6deg) translateY(-6px); }
+    to{ opacity:1; transform:rotate(-1.4deg) translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .tag{ animation:none; }
+  }
+
+  /* ---- panels ---- */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:16px;
+    margin-top:18px;
+  }
+  .step{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    margin:0 0 12px;
+    font-size:.95rem;
+    font-weight:700;
+  }
+  .step span.num{
+    font-family:'JetBrains Mono', monospace;
+    color:var(--accent);
+    font-weight:500;
+  }
+  .hint{
+    font-size:.78rem;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+  }
+
+  /* ---- add ingredient row ---- */
+  .add-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+  }
+  input[type="text"]{
+    flex:1;
+    min-width:0;
+    font:inherit;
+    font-size:.9rem;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--surface-2);
+    color:var(--ink);
+  }
+  input[type="text"]:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  .chip-btn:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  button{
+    font:inherit;
+    cursor:pointer;
+    border:1.5px solid var(--ink);
+    border-radius:2px;
+    background:var(--surface);
+    color:var(--ink);
+    padding:10px 14px;
+    font-size:.9rem;
+    font-weight:500;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .btn-primary:active{ box-shadow:none; transform:translate(2px,2px); }
+  .btn-full{ width:100%; margin-top:4px; }
+
+  /* ---- chips ---- */
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:4px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--surface);
+    border:1px solid var(--ink);
+    border-radius:2px;
+    box-shadow:1.5px 1.5px 0 var(--ink);
+    padding:5px 6px 5px 10px;
+    font-size:.82rem;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .chip button.x{
+    border:none;
+    background:none;
+    padding:0 2px;
+    font-size:.95rem;
+    line-height:1;
+    color:var(--ink-soft);
+    box-shadow:none;
+  }
+  .chip button.x:hover{ color:var(--ink); }
+
+  .empty-note{
+    font-size:.82rem;
+    color:var(--ink-soft);
+    margin:2px 0 10px;
+  }
+
+  .suggest-label{
+    font-size:.78rem;
+    color:var(--ink-soft);
+    margin:14px 0 8px;
+  }
+  .chip-btn{
+    border:1px dashed var(--stone);
+    background:transparent;
+    color:var(--ink-soft);
+    border-radius:2px;
+    padding:5px 10px;
+    font-size:.78rem;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .chip-btn:hover{ border-color:var(--accent); color:var(--accent); }
+
+  .clear-link{
+    background:none;
+    border:none;
+    padding:0;
+    font-size:.78rem;
+    color:var(--ink-soft);
+    text-decoration:underline;
+    box-shadow:none;
+    margin-top:6px;
+  }
+
+  /* ---- textarea (label paper) ---- */
+  textarea{
+    width:100%;
+    min-height:110px;
+    font:inherit;
+    font-family:'JetBrains Mono', monospace;
+    font-size:.82rem;
+    line-height:1.6;
+    padding:12px;
+    border:1px dashed var(--stone);
+    border-radius:2px;
+    background:var(--surface-2);
+    color:var(--ink);
+    resize:vertical;
+  }
+
+  /* ---- results ---- */
+  .result-item{
+    padding:10px 0;
+    border-top:1px solid var(--line);
+  }
+  .result-item:first-child{ border-top:none; }
+  .result-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:.92rem;
+    font-weight:700;
+  }
+  .dot{
+    width:9px; height:9px;
+    border-radius:50%;
+    flex:none;
+  }
+  .dot.found{ background:var(--accent); }
+  .dot.notfound{ background:var(--stone); }
+  .result-status{
+    font-size:.78rem;
+    font-weight:400;
+    color:var(--ink-soft);
+    margin-left:auto;
+  }
+  .result-cat{
+    font-size:.76rem;
+    color:var(--ink-soft);
+    margin:3px 0 0 17px;
+  }
+  .result-effect{
+    font-size:.83rem;
+    color:var(--ink-soft);
+    margin:4px 0 0 17px;
+  }
+  .section-sub{
+    font-size:.82rem;
+    font-weight:700;
+    margin:18px 0 6px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .placeholder{
+    font-size:.85rem;
+    color:var(--ink-soft);
+  }
+  footer{
+    margin-top:22px;
+    font-size:.72rem;
+    color:var(--stone);
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tag">
+    <h1>全成分チェック</h1>
+    <p>気になる成分をパッと確認できるツール</p>
+  </div>
+
+  <div class="panel">
+    <p class="step"><span class="num">1.</span> チェックしたい成分を登録</p>
+    <div class="add-row">
+      <input type="text" id="ingredientInput" placeholder="成分名を入力（例：ヒアルロン酸Na）" aria-label="登録する成分名">
+      <button id="addBtn">追加</button>
+    </div>
+    <div id="chipList" class="chips"></div>
+    <p id="emptyNote" class="empty-note">まだ登録されていません。下の候補から選ぶか、自分で入力してください。</p>
+    <button id="clearBtn" class="clear-link" style="display:none;">すべて削除</button>
+
+    <p class="suggest-label">よく検索される成分から選ぶ</p>
+    <div id="suggestList" class="chips"></div>
+  </div>
+
+  <div class="panel">
+    <p class="step"><span class="num">2.</span> 成分表を貼り付け</p>
+    <p class="hint">パッケージの全成分表示をそのままコピー＆ペーストしてください。</p>
+    <textarea id="ingredientText" aria-label="成分表を貼り付け" placeholder="例：水、BG、グリセリン、ヒアルロン酸Na、セラミドNP、フェノキシエタノール..."></textarea>
+    <button id="checkBtn" class="btn-primary btn-full">チェックする</button>
+  </div>
+
+  <div class="panel" aria-live="polite">
+    <p class="step"><span class="num">3.</span> 結果</p>
+    <div id="results">
+      <p class="placeholder">成分を登録して成分表を貼り付けると、ここに結果が表示されます。</p>
+    </div>
+  </div>
+
+  <footer>
+    ※ 一般的に知られている化粧品成分の役割を簡単にまとめたものです。製品ごとの効果や安全性を保証するものではありません。判断に迷う場合は製造元や専門家にご確認ください。<br>
+    ※ 登録した成分リストはこの端末にのみ保存され、次回この画面を開いたときも引き継がれます。
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  var ingredientDB = [
+    {name:"水", aliases:["精製水","イオン交換水"], category:"基剤", effect:"他の成分を溶かし込むための基剤（ベース）として配合されます。"},
+    {name:"BG", aliases:["ブチレングリコール","1,3-ブチレングリコール"], category:"保湿", effect:"保湿成分を溶かしやすくするほか、肌のうるおいを保つ働きもあります。"},
+    {name:"グリセリン", aliases:[], category:"保湿", effect:"空気中の水分を引き寄せ、肌の水分保持を助けます。"},
+    {name:"ヒアルロン酸Na", aliases:["ヒアルロン酸ナトリウム"], category:"保湿", effect:"自重の数百倍ともいわれる水分を抱え込む、代表的な保湿成分です。"},
+    {name:"加水分解ヒアルロン酸", aliases:[], category:"保湿", effect:"通常のヒアルロン酸より分子が小さく、肌になじみやすいとされます。"},
+    {name:"セラミド", aliases:["セラミドNP","セラミドAP","セラミド3","セラミド6-II","セラミドEOP"], category:"保湿", effect:"肌表面のバリア機能を支える細胞間脂質の一種で、うるおいの蒸発を防ぎます。"},
+    {name:"コラーゲン", aliases:["加水分解コラーゲン"], category:"保湿", effect:"肌表面に薄い膜を作り、うるおいを保持しやすくします。"},
+    {name:"スクワラン", aliases:[], category:"保湿", effect:"肌になじみやすい油分で、うるおいを閉じ込めるフタの役割をします。"},
+    {name:"ワセリン", aliases:["ペトロラタム"], category:"保湿", effect:"肌の表面を覆って水分の蒸発を防ぐ、保護力の高い保湿成分です。"},
+    {name:"ナイアシンアミド", aliases:["ニコチン酸アミド"], category:"美白・肌荒れケア", effect:"美白ケアやハリ、バリア機能のサポートなど幅広い働きが期待される成分です。"},
+    {name:"アスコルビン酸", aliases:["ビタミンC","3-O-エチルアスコルビン酸","アスコルビン酸グルコシド","リン酸アスコルビルMg"], category:"美白・抗酸化", effect:"抗酸化作用や美白ケアの目的で使われる成分です。"},
+    {name:"トコフェロール", aliases:["ビタミンE","酢酸トコフェロール"], category:"抗酸化", effect:"油分の酸化を防ぐ、抗酸化成分として配合されます。"},
+    {name:"レチノール", aliases:["パルミチン酸レチノール"], category:"エイジングケア", effect:"ターンオーバーを促す働きが知られ、エイジングケア化粧品によく使われます。"},
+    {name:"パンテノール", aliases:["プロビタミンB5"], category:"保湿", effect:"肌をやわらかく整え、うるおいを与える成分です。"},
+    {name:"アラントイン", aliases:[], category:"肌荒れケア", effect:"肌を落ち着かせる目的で配合される、肌荒れケア成分です。"},
+    {name:"グリチルリチン酸2K", aliases:["グリチルリチン酸ジカリウム"], category:"肌荒れケア", effect:"甘草由来の成分で、肌荒れを防ぐ目的で配合されます。"},
+    {name:"サリチル酸", aliases:[], category:"角質ケア", effect:"古い角質をやわらかくする働きがあり、ニキビ・毛穴ケア製品に使われます。"},
+    {name:"グリコール酸", aliases:["AHA"], category:"角質ケア", effect:"角質をやわらかくするピーリング系の成分です。"},
+    {name:"乳酸", aliases:[], category:"角質ケア・保湿", effect:"角質ケアと保湿、両方の働きが期待される成分です。"},
+    {name:"トラネキサム酸", aliases:[], category:"美白", effect:"メラニンの生成に関わる働きに着目した美白成分です。"},
+    {name:"アルブチン", aliases:["α-アルブチン"], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
+    {name:"コウジ酸", aliases:[], category:"美白", effect:"メラニンの生成を抑える働きに着目した美白成分です。"},
+    {name:"ジメチコン", aliases:["シリコーン"], category:"感触改善", effect:"肌表面をなめらかにし、のびや使用感を良くするシリコーン系成分です。"},
+    {name:"シクロペンタシロキサン", aliases:[], category:"感触改善", effect:"さらっとした使用感を出すために使われるシリコーン系成分です。"},
+    {name:"エタノール", aliases:["変性アルコール","アルコール"], category:"溶剤・清涼感", effect:"清涼感を与えたり成分を溶かしたりしますが、乾燥しやすい肌には刺激になる場合があります。"},
+    {name:"フェノキシエタノール", aliases:[], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
+    {name:"メチルパラベン", aliases:["パラベン","エチルパラベン","プロピルパラベン"], category:"防腐剤", effect:"製品の品質を保つための防腐剤として配合されます。"},
+    {name:"香料", aliases:["フレグランス","パルファム"], category:"香り", effect:"製品に香りをつけるための成分です。"},
+    {name:"着色料", aliases:["青色1号","黄色4号","赤色202号"], category:"着色", effect:"製品に色をつけるための成分です。"},
+    {name:"クエン酸", aliases:[], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
+    {name:"水酸化Na", aliases:["水酸化ナトリウム"], category:"pH調整", effect:"製品のpHを整えるために使われます。"},
+    {name:"EDTA-2Na", aliases:["エデト酸2Na"], category:"安定化", effect:"金属イオンを封じ込め、製品の品質を安定させるために配合されます。"},
+    {name:"カルボマー", aliases:[], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
+    {name:"キサンタンガム", aliases:[], category:"増粘剤", effect:"製品にとろみをつけるための増粘剤です。"},
+    {name:"ラウリル硫酸Na", aliases:["ラウリル硫酸ナトリウム","SLS"], category:"洗浄剤", effect:"高い洗浄力を持つ界面活性剤で、洗浄料などに使われます。"},
+    {name:"コカミドDEA", aliases:[], category:"洗浄補助", effect:"泡立ちや泡質を良くするために配合されます。"},
+    {name:"ステアリン酸", aliases:[], category:"乳化剤", effect:"油分と水分を混ぜ合わせる乳化剤として使われます。"},
+    {name:"ミリスチン酸イソプロピル", aliases:[], category:"感触改善", effect:"油分をなじみやすくし、のびを良くする成分です。"},
+    {name:"ホホバ種子油", aliases:["ホホバオイル"], category:"保湿", effect:"肌になじみやすい植物油で、うるおいを与えます。"},
+    {name:"シア脂", aliases:["シアバター"], category:"保湿", effect:"肌をやわらかく保湿する植物性の油分です。"},
+    {name:"ユビキノン", aliases:["コエンザイムQ10"], category:"抗酸化", effect:"抗酸化作用が期待される、エイジングケア系の成分です。"},
+    {name:"プラセンタエキス", aliases:[], category:"保湿", effect:"うるおいや肌のコンディションを整える目的で配合されます。"},
+    {name:"ペンチレングリコール", aliases:[], category:"保湿・防腐サポート", effect:"保湿効果に加え、防腐効果を高めるサポート役としても使われます。"},
+    {name:"1,2-ヘキサンジオール", aliases:[], category:"防腐サポート", effect:"防腐効果を高めるサポート役として配合されることが多い成分です。"},
+    {name:"ヒアルロン酸クロスポリマー", aliases:[], category:"保湿・皮膜形成", effect:"肌表面に均一な膜を作り、うるおいを保つ働きがあります。"}
+  ];
+
+  var suggestions = ["ヒアルロン酸Na","セラミド","ナイアシンアミド","レチノール","アスコルビン酸","グリチルリチン酸2K","サリチル酸","パラベン","香料","エタノール","ラウリル硫酸Na","トラネキサム酸"];
+
+  var watchlist = [];
+
+  var chipListEl = document.getElementById('chipList');
+  var emptyNoteEl = document.getElementById('emptyNote');
+  var clearBtnEl = document.getElementById('clearBtn');
+  var suggestListEl = document.getElementById('suggestList');
+  var inputEl = document.getElementById('ingredientInput');
+  var addBtnEl = document.getElementById('addBtn');
+  var textareaEl = document.getElementById('ingredientText');
+  var checkBtnEl = document.getElementById('checkBtn');
+  var resultsEl = document.getElementById('results');
+
+  function toHalfWidth(str){
+    return str.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(s){
+      return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+    });
+  }
+  function normalize(str){
+    return toHalfWidth(str || '').replace(/\s+/g,'').toLowerCase();
+  }
+  function isMatch(a, b){
+    if(a.length < 2 || b.length < 2) return a === b;
+    return a.indexOf(b) !== -1 || b.indexOf(a) !== -1;
+  }
+
+  function findDbEntry(name){
+    var n = normalize(name);
+    for(var i=0;i<ingredientDB.length;i++){
+      var e = ingredientDB[i];
+      var candidates = [e.name].concat(e.aliases || []).map(normalize);
+      for(var j=0;j<candidates.length;j++){
+        if(isMatch(candidates[j], n)) return e;
+      }
+    }
+    return null;
+  }
+
+  async function loadWatchlist(){
+    try{
+      var res = await window.storage.get('watchlist', false);
+      return res ? JSON.parse(res.value) : [];
+    }catch(e){
+      return [];
+    }
+  }
+  async function saveWatchlist(list){
+    try{
+      await window.storage.set('watchlist', JSON.stringify(list), false);
+    }catch(e){
+      console.error('保存に失敗しました', e);
+    }
+  }
+
+  function renderChips(){
+    chipListEl.innerHTML = '';
+    watchlist.forEach(function(name, idx){
+      var chip = document.createElement('span');
+      chip.className = 'chip';
+      var label = document.createElement('span');
+      label.textContent = name;
+      var x = document.createElement('button');
+      x.className = 'x';
+      x.type = 'button';
+      x.setAttribute('aria-label', name + 'を削除');
+      x.textContent = '×';
+      x.addEventListener('click', function(){
+        watchlist.splice(idx,1);
+        saveWatchlist(watchlist);
+        renderChips();
+      });
+      chip.appendChild(label);
+      chip.appendChild(x);
+      chipListEl.appendChild(chip);
+    });
+    emptyNoteEl.style.display = watchlist.length ? 'none' : 'block';
+    clearBtnEl.style.display = watchlist.length ? 'inline' : 'none';
+  }
+
+  function renderSuggestions(){
+    suggestListEl.innerHTML = '';
+    suggestions.forEach(function(name){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip-btn';
+      b.textContent = '+ ' + name;
+      b.addEventListener('click', function(){ addIngredient(name); });
+      suggestListEl.appendChild(b);
+    });
+  }
+
+  function addIngredient(raw){
+    var name = (raw || '').trim();
+    if(!name) return;
+    var n = normalize(name);
+    var exists = watchlist.some(function(w){ return normalize(w) === n; });
+    if(exists) return;
+    watchlist.push(name);
+    saveWatchlist(watchlist);
+    renderChips();
+  }
+
+  addBtnEl.addEventListener('click', function(){
+    addIngredient(inputEl.value);
+    inputEl.value = '';
+    inputEl.focus();
+  });
+  inputEl.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      addIngredient(inputEl.value);
+      inputEl.value = '';
+    }
+  });
+  clearBtnEl.addEventListener('click', function(){
+    watchlist = [];
+    saveWatchlist(watchlist);
+    renderChips();
+  });
+
+  function escapeHtml(s){
+    return s.replace(/[&<>]/g, function(c){
+      return c === '&' ? '&amp;' : (c === '<' ? '&lt;' : '&gt;');
+    });
+  }
+
+  function checkIngredients(){
+    var text = textareaEl.value;
+    if(!text.trim()){
+      resultsEl.innerHTML = '<p class="placeholder">成分表を貼り付けてください。</p>';
+      return;
+    }
+
+    var items = text.split(/[、,，\/\n]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+    var itemsNorm = items.map(normalize);
+
+    var html = '';
+
+    if(watchlist.length === 0){
+      html += '<p class="placeholder">登録された成分がありません。下に、この表に含まれる注目成分を表示します。</p>';
+    } else {
+      watchlist.forEach(function(w){
+        var wNorm = normalize(w);
+        var found = itemsNorm.some(function(iN){ return isMatch(iN, wNorm); });
+        var entry = findDbEntry(w);
+        html += '<div class="result-item">';
+        html += '<div class="result-head"><span class="dot ' + (found ? 'found' : 'notfound') + '"></span>';
+        html += '<span>' + escapeHtml(w) + '</span>';
+        html += '<span class="result-status">' + (found ? '含まれています' : '見つかりません') + '</span></div>';
+        if(entry){
+          html += '<p class="result-cat">【' + escapeHtml(entry.category) + '】</p>';
+          html += '<p class="result-effect">' + escapeHtml(entry.effect) + '</p>';
+        }
+        html += '</div>';
+      });
+    }
+
+    // auto-detect other known ingredients not already covered by the watchlist
+    var watchNorms = watchlist.map(normalize);
+    var others = [];
+    ingredientDB.forEach(function(entry){
+      var names = [entry.name].concat(entry.aliases || []).map(normalize);
+      var inList = names.some(function(nm){
+        return itemsNorm.some(function(iN){ return isMatch(iN, nm); });
+      });
+      if(!inList) return;
+      var alreadyWatched = names.some(function(nm){
+        return watchNorms.some(function(wN){ return isMatch(wN, nm); });
+      });
+      if(!alreadyWatched) others.push(entry);
+    });
+
+    html += '<p class="section-sub">この表に含まれるその他の注目成分</p>';
+    if(others.length === 0){
+      html += '<p class="placeholder">データベースに一致する成分は他に見つかりませんでした。</p>';
+    } else {
+      others.forEach(function(entry){
+        html += '<div class="result-item">';
+        html += '<div class="result-head"><span class="dot found"></span><span>' + escapeHtml(entry.name) + '</span></div>';
+        html += '<p class="result-cat">【' + escapeHtml(entry.category) + '】</p>';
+        html += '<p class="result-effect">' + escapeHtml(entry.effect) + '</p>';
+        html += '</div>';
+      });
+    }
+
+    resultsEl.innerHTML = html;
+  }
+
+  checkBtnEl.addEventListener('click', checkIngredients);
+
+  renderSuggestions();
+  renderChips();
+  loadWatchlist().then(function(list){
+    watchlist = list;
+    renderChips();
+  });
+
+})();
+</script>
+</body>
+</html>
