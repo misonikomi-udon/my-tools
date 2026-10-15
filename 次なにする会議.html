@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ja" data-mode="couple">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>次なにする会議</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+:root{--bg:#F4F3FB;--ink:#1F1B4D;--sub:#6B678F;--card:#fff;--line:#DDD9F2;--couple:#D93F68;--friends:#16816F;--on:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15132E;--ink:#F1EFFF;--sub:#A6A2CF;--card:#221F45;--line:#37336B;--couple:#FF7E9D;--friends:#4DD2BC;--on:#15132E;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15132E;--ink:#F1EFFF;--sub:#A6A2CF;--card:#221F45;--line:#37336B;--couple:#FF7E9D;--friends:#4DD2BC;--on:#15132E;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html[data-mode="couple"]{--acc:var(--couple)}html[data-mode="friends"]{--acc:var(--friends)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",sans-serif;font-weight:500;line-height:1.6}
+main{max-width:480px;margin:0 auto;padding:28px 20px 40px}
+h1{font-size:34px;font-weight:900;margin:8px 0 6px;letter-spacing:.02em}
+.lead{color:var(--sub);margin:0 0 24px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.seg button{padding:16px 8px;border-radius:16px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:18px}
+.seg button.on{border-color:var(--acc);background:var(--acc);color:var(--on)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--card);border:2px solid var(--line);border-radius:16px;margin-bottom:22px;font-weight:700}
+.step{display:flex;align-items:center;gap:14px}
+.step button{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);font-size:22px;font-weight:700}
+.step button:disabled{opacity:.35;cursor:default}
+.step b{min-width:2.6em;text-align:center;font-size:20px}
+.main{display:block;width:100%;padding:16px;border-radius:16px;background:var(--acc);color:var(--on);font-weight:900;font-size:18px}
+.main:disabled{opacity:.4;cursor:default}
+.ghost{display:block;width:100%;padding:12px;margin-top:8px;color:var(--sub);font-weight:700}
+details{margin-top:22px;color:var(--sub)}summary{cursor:pointer;padding:8px 0;font-weight:700}
+.add{display:flex;gap:8px;margin-top:6px}
+.add input{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.add button{padding:0 18px;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:700}
+.who{font-size:26px;font-weight:900;margin:6px 0 2px;color:var(--acc)}
+.hint{color:var(--sub);margin:0 0 16px}
+#grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+#grid button{min-height:96px;padding:12px;border-radius:16px;background:var(--card);border:2px solid var(--line);text-align:left;font-weight:700;line-height:1.45}
+#grid button.sel{border-color:var(--acc);box-shadow:inset 0 0 0 2px var(--acc)}
+#grid button.out{opacity:0;transform:scale(.92)}
+@media (prefers-reduced-motion:no-preference){#grid button{transition:opacity .25s,transform .25s}}
+.left{text-align:center;color:var(--sub);margin:14px 0 0}
+.final{padding:36px 22px;margin:4px 0 24px;border-radius:24px;background:var(--acc);color:var(--on);font-size:28px;font-weight:900;line-height:1.4;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<section id="setup">
+<h1>次なにする会議</h1>
+<p class="lead">やりたくないお題を順番に外していって、最後に残った1枚をやる。</p>
+<div class="seg"><button id="mc">カップル</button><button id="mf">友達</button></div>
+<div class="row"><span>人数</span><div class="step"><button id="minus" aria-label="減らす">−</button><b id="n"></b><button id="plus" aria-label="増やす">＋</button></div></div>
+<button class="main" id="start">はじめる</button>
+<details><summary>お題を足す（<span id="cc">0</span>枚）</summary>
+<div class="add"><input id="in" maxlength="30" placeholder="例：猫カフェに行く"><button id="addb">追加</button></div></details>
+</section>
+
+<section id="play" hidden>
+<p class="who" id="who"></p>
+<p class="hint">やりたくないお題を1枚選んで、外す</p>
+<div id="grid"></div>
+<button class="main" id="drop" disabled>この1枚を外す</button>
+<button class="ghost" id="redraw">お題を引き直す</button>
+<p class="left" id="left"></p>
+</section>
+
+<section id="result" hidden>
+<p class="lead">今日はこれをやろう</p>
+<div class="final" id="final"></div>
+<button class="main" id="again">もう一度</button>
+<button class="ghost" id="back">設定に戻る</button>
+</section>
+</main>
+
+<script>
+const BASE={
+couple:["夜景を見に行く","100円ショップで1つずつ贈り合う","行ったことのないカフェに入る","手をつないで知らない道を散歩する","映画をその場で選んで観る","ふたりで朝ごはんを作る","写真を撮り合いながら散歩する","お互いの好きな曲を1曲ずつ流す","コンビニでお互いにおやつを選ぶ","近所の公園でのんびりする","プリクラを撮る","電車でいつもと反対方向に乗る","手紙を書いて交換する","温泉かスーパー銭湯に行く","星を見に少し遠くまで行く","おそろいのものを1つ買う","夜にドライブして帰る","子どものころの話をし合う","ふたりで模様替えをする","食べたことのない国の料理を食べる","ボウリングかカラオケで勝負する","今年中にやりたいことを書き出す","ホテルのビュッフェでゆっくりする","美術館か展示を見に行く","コンビニスイーツでおうちカフェ","ふたりで新しい料理に挑戦する","古着屋や雑貨屋をはしごする","海か川まで行って水辺で過ごす","何もせずゴロゴロする","次の旅行の計画を立てる"],
+friends:["みんなで鍋かたこ焼きをする","カラオケで点数勝負する","ボードゲームカフェに行く","コンビニで500円の買い物対決","公園でバドミントンかフリスビー","全員でプリクラを撮る","行ったことのない町を歩く","食べ放題で元を取りに行く","みんなで映画を1本観る","キャンプかBBQを計画する","ボウリングやダーツで対決","だれかの家でゲーム大会","古着屋や雑貨屋をはしごする","おそろいの小物を買う","手作りピザやパンケーキを作る","謎解きイベントに挑戦する","バッティングセンターに行く","日帰りで海か山へ行く","クレーンゲームで景品を取りきる","朝まで語り明かす","食べ歩きできる商店街へ行く","流行りのスイーツを食べに行く","全員知らない曲でカラオケする","温泉やスパで日帰りリフレッシュ","フリマや蚤の市を見に行く","写真展や美術館へ行く","スポッチャで全力で遊ぶ","次の旅行の行き先を決める","ダラダラして何もしない","サプライズでお祝いの準備をする"],
+both:["近所のおいしいお店を開拓する","夕焼けを見に行く","100円ショップで宝探し","朝イチでモーニングを食べる","古本屋をめぐる","散歩して見つけたお店に入る","公園でお弁当を食べる","ケーキを買って食べる","水族館か動物園に行く","夜中にラーメンを食べに行く"]};
+
+const $=s=>document.querySelector(s);
+let mode="couple",n=2,turn=0,pool=[],sel=null,custom=[];
+try{custom=JSON.parse(localStorage.getItem("nani-custom")||"[]")}catch(e){}
+const saveC=()=>{try{localStorage.setItem("nani-custom",JSON.stringify(custom))}catch(e){}};
+const show=id=>["setup","play","result"].forEach(s=>$("#"+s).hidden=s!==id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function renderSetup(){
+  document.documentElement.dataset.mode=mode;
+  if(mode==="couple")n=2;
+  $("#mc").classList.toggle("on",mode==="couple");
+  $("#mf").classList.toggle("on",mode==="friends");
+  $("#n").textContent=n+"人";
+  $("#minus").disabled=mode==="couple"||n<=2;
+  $("#plus").disabled=mode==="couple"||n>=6;
+  $("#cc").textContent=custom.length;
+}
+function deal(){
+  pool=shuffle(custom.concat(BASE[mode],BASE.both)).slice(0,8);
+  turn=0;sel=null;renderPlay();
+}
+function renderPlay(){
+  $("#who").textContent=(turn%n+1)+"人目の番";
+  $("#left").textContent="残り "+pool.length+" 枚";
+  $("#drop").disabled=sel===null;
+  const g=$("#grid");g.innerHTML="";
+  pool.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.textContent=t;b.className=i===sel?"sel":"";
+    b.onclick=()=>{sel=i;renderPlay()};
+    g.appendChild(b);
+  });
+}
+$("#mc").onclick=()=>{mode="couple";renderSetup()};
+$("#mf").onclick=()=>{mode="friends";if(n<3)n=3;renderSetup()};
+$("#minus").onclick=()=>{n--;renderSetup()};
+$("#plus").onclick=()=>{n++;renderSetup()};
+$("#addb").onclick=()=>{
+  const v=$("#in").value.trim();if(!v)return;
+  custom.push(v);saveC();$("#in").value="";renderSetup();
+};
+$("#start").onclick=()=>{show("play");deal()};
+$("#redraw").onclick=deal;
+$("#drop").onclick=()=>{
+  if(sel===null)return;
+  const btn=$("#grid").children[sel];btn.classList.add("out");
+  setTimeout(()=>{
+    pool.splice(sel,1);sel=null;turn++;
+    if(pool.length===1){$("#final").textContent=pool[0];show("result")}
+    else renderPlay();
+  },220);
+};
+$("#again").onclick=()=>{show("play");deal()};
+$("#back").onclick=()=>{show("setup");renderSetup()};
+renderSetup();
+</script>
+</body>
+</html>
